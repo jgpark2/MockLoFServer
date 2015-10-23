@@ -56,14 +56,14 @@ void sendAll(Player* player) {
     for(auto it : players)
         if((it->second) != player)
             sendmessage((it->second)->sock, "", 0, 0);
-}
+    }
 
-void caseLogin() {
-    int id=readbyte(0);
-    Player player = players.get(id);
-    player->name = readstring(0);
-    cout << "Player: " << player->name << " joined." << endl;
-    clearbuffer(0);
+    void caseLogin() {
+        int id=readbyte(0);
+        Player player = players.get(id);
+        player->name = readstring(0);
+        cout << "Player: " << player->name << " joined." << endl;
+        clearbuffer(0);
         writebyte(3,0);
         writebyte(id,0);
 
@@ -73,59 +73,59 @@ void caseLogin() {
         writestring(&(player->name)[0],0);
         sendAll(player);
 
-    for(auto it : players)
-        if((it->second) != player) {
-            clearbuffer(0);
+        for(auto it : players)
+            if((it->second) != player) {
+                clearbuffer(0);
                 writebyte(3,0);
                 writebyte((it->second)->id,0);
                 writestring(&(it->second->name)[0],0);
                 sendmessage(it->second->sock, "", 0, 0);
+            }
+
         }
-                
-}
 
-void caseEnter() {
-    int id=readbyte(0);
-    Player player = players.get(id);
+        void caseEnter() {
+            int id=readbyte(0);
+            Player player = players.get(id);
 
-    player->x = readshort(0);
-    player->y = readshort(0);
-    player->direction = readshort(0);
+            player->x = readshort(0);
+            player->y = readshort(0);
+            player->direction = readshort(0);
 
-    clearbuffer(0);
-        writebyte(5,0);
-        writebyte(id,0);
-        writeshort(player->x,0);
-        writeshort(player->y,0);
-        writeshort(player->direction,0);
-        sendAll(player);
-}
+            clearbuffer(0);
+            writebyte(5,0);
+            writebyte(id,0);
+            writeshort(player->x,0);
+            writeshort(player->y,0);
+            writeshort(player->direction,0);
+            sendAll(player);
+        }
 
-void caseLeave() {
-    int id=readbyte(0);
-    Player player = players.get(id);
+        void caseLeave() {
+            int id=readbyte(0);
+            Player player = players.get(id);
 
-    cout << player->name << " has left." << endl;
+            cout << player->name << " has left." << endl;
 
-    clearbuffer(0);
-        writebyte(6,0);
-        writebyte(id,0);
-        writestring(&(player->name)[0],0);
-        sendAll(player);
+            clearbuffer(0);
+            writebyte(6,0);
+            writebyte(id,0);
+            writestring(&(player->name)[0],0);
+            sendAll(player);
 
-    closesock(player->sock);
-}
+            closesock(player->sock);
+        }
 
-void caseChat() {
-    string message=readstring(0);
-    cout << message << endl;
-    clearbuffer(0);
-        writebyte(8,0);
-        writestring(&message[0],0);
-        sendAll(nullptr);
-}
+        void caseChat() {
+            string message=readstring(0);
+            cout << message << endl;
+            clearbuffer(0);
+            writebyte(8,0);
+            writestring(&message[0],0);
+            sendAll(nullptr);
+        }
 
-void handleMSG(MSG msgID){
+        void handleMSG(MSG msgID){
     /*
     --obj_login event user 0-- In my case, this should include the 100-line event user 0 code on obj_player too
     messageid = readbyte() //Check the ID of the incoming message
@@ -164,23 +164,23 @@ void handleMSG(MSG msgID){
 
     switch(msgID) {
         case LOGIN:
-            caseLogin();
-            break;
+        caseLogin();
+        break;
 
         case ENTER: //Relaying requested user data.
-            caseEnter();
-            break;
+        caseEnter();
+        break;
 
         case LEAVE: //Someone left.
-            caseLeave();
-            break;
+        caseLeave();
+        break;
 
         case CHAT: // The chat
-            caseChat();
-            break;
+        caseChat();
+        break;
 
         default:
-            break;
+        break;
     }
 }
 
@@ -239,23 +239,23 @@ int main()
     running = true;
 
     auto listen = tcplisten(serverport, 2, 1);
-	if (listen <= 0) {
-		cout << "Failed to listen on port " << serverport << endl;
+    if (listen <= 0) {
+        cout << "Failed to listen on port " << serverport << endl;
         end();
-		return 0;
-	}
-	cout << "Server listening on port " << serverport << endl;
+        return 0;
+    }
+    cout << "Server listening on port " << serverport << endl;
 
-	init_monsters();
+    init_monsters();
     init_cashshopitem();
-    
-	while(true)
-	{
+
+    while(true) {
         if (!running)
             break;
 
         Sleep(5); // Pause for a bit, without this your CPU would max out (1ms)
         //where is this Sleep fn? sleep in c++ goes by seconds, usleep is unsupported and harder to workaround in windows
+        //oh yeah, since the server ran at 30 steps (30 fps), i guess it should be like 20~30ms-ish...
 
 
         /*
@@ -277,11 +277,10 @@ int main()
         _addline("Connection from 'iphere'...");
         */
 
-	    
+
         // Accept New Players
 	    auto newSocket = tcpaccept(listen, true); //Accept incoming connections in non-blocking mode
-	    if(newSocket > 0)
-        {
+	    if(newSocket > 0) {
             //If a client wants to connect we use the setnagle function to enable a smooth connection
             setnagle(newSocket,true);
 
@@ -332,8 +331,7 @@ int main()
         event_user(0) //Switch to the user_defined event0 to check the message we just got
         */
         // INCOMING CLIENT MESSAGES (Messages Sent From Client)
-        for(auto it : players)
-		{
+        for(auto it : players) {
             Player player = it->second;  //This whole section should be a method inside Player :x
 
             auto size = receivemessage(player->sock, 0, 0); // Messages coming from clients
@@ -348,14 +346,15 @@ int main()
                 handleMSG(msgID);
             }
         }
-	}
+    }
 
-	clearbuffer(0);
-	writebyte(7, 0);
+    clearbuffer(0);
+    writebyte(7, 0);
 
     for(auto it : players) {
         sendmessage(it->second->sock, "", 0, 0);
     }
 
+    end();
     return 0;
 }
